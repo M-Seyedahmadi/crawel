@@ -16,8 +16,8 @@ function crawlerAction()
     $all_links = getLinks($url)['links'];
     $all_images = getLinks($url)['images'];
     foreach ($all_links as $link) {
-        array_push($all_links, getLinks($link)['links']);
-        array_push($all_images, getLinks($link)['images']);
+        $all_links = array_merge($all_links, getLinks($link)['links']);
+        $all_images = array_merge($all_images, getLinks($link)['images']);
     }
 
     if (!empty($all_links)) {
@@ -33,14 +33,23 @@ function getLinks($url)
 {
     $client = new Client();
     $response = $client->request('GET', $url);
+    try {
+        $client->get("{https://www.eghamat24.com/}");
+    }
+    catch (GuzzleHttp\Exception\BadResponseException $e) {
+        $response = $e->getResponse();
+        $responseBodyAsString = $response->getBody()->getContents();
+    }
 
     $crawler = new Crawler((string)$response->getBody());
     $images = ImageAction($crawler);
     $links_count = $crawler->filter('a[href]')->count();
     if($links_count > 0) {
         $links = $crawler->filter('a')->each(function ($node) use ($url) {
-            $links = $node->attr('href');
-            return $links;
+            $link = $node->attr('href');
+            if (str_contains($link, $url)) {
+                return $link;
+            }
         });
 
         return [
