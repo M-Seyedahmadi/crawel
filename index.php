@@ -4,6 +4,7 @@
 //}
 
 require_once "vendor/autoload.php";
+require_once "database/database.php";
 use GuzzleHttp\Client;
 use Symfony\Component\DomCrawler\Crawler;
 crawlerAction();
@@ -11,6 +12,7 @@ crawlerAction();
 
 function crawlerAction()
 {
+    echo CountByStatusCode(200);
     $url = "https://www.eghamat24.com/";
 
     $all_links = getLinks($url)['links'];
@@ -32,12 +34,13 @@ function crawlerAction()
 function getLinks($url)
 {
     $client = new Client();
-    $response = $client->request('GET', $url);
+
     try {
-        $client->get("{https://www.eghamat24.com/}");
-    }
-    catch (GuzzleHttp\Exception\BadResponseException $e) {
+        $response = $client->request('GET', $url);
+    }    catch (Exception $e) {
         $response = $e->getResponse();
+        $message = $e->getMessage();
+        echo $message;
         $responseBodyAsString = $response->getBody()->getContents();
     }
 
@@ -52,14 +55,34 @@ function getLinks($url)
             }
         });
 
+        $linksDetails = [];
+        foreach (array_unique($links) as $link) {
+            $linksDetails[] = get_link_detail($link);
+        }
         return [
-            'links' => array_unique($links),
+            'links' => $linksDetails,
             'images' => $images,
             ];
     }
     return [];
 }
+function get_link_detail($link){
+    $client = new Client();
+    $response = $client->request('GET', $link);
+    $crawler = new Crawler((string)$response->getBody());
+    $text = $crawler->filter('a[href]')->text();
+    if() {
 
+    } else {
+
+    }
+
+    return [
+        'link'=>$link,
+        'response_code'=> $response ->getStatusCode(),
+        'text' => $text,
+    ];
+}
 function ImageAction($crawler){
     return $crawler->filter('img')->each(function ($node) {
         return $node->image();
