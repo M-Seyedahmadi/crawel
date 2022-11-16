@@ -19,7 +19,7 @@ function delete_crawl ($id) {
 }
 
 function insert_crawl ($date){
-    $query = "INSERT INTO crawl (title, link, type, status_code ,created_at) VALUES ('".$date["title"]."','".$date["link"]."','".$date["type"]."','".$date["status_code"]."','".$date[" new DateTime()"]."')";
+    $query = "INSERT INTO crawl (title, link, type, status_code ,created_at) VALUES ('".$date["title"]."','".$date["link"]."','".$date["type"]."','".$date["status_code"]."','". new DateTime() ."')";
     return get_query_result($query);
 }
 ?>
