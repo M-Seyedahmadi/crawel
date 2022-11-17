@@ -5,14 +5,17 @@
 
 require_once "vendor/autoload.php";
 require_once "database/database.php";
+
 use GuzzleHttp\Client;
 use Symfony\Component\DomCrawler\Crawler;
+
 crawlerAction();
 //ImageAction();
 
+
 function crawlerAction()
 {
-    echo CountByStatusCode(200);
+
     $url = "https://www.eghamat24.com/";
 
     $all_links = getLinks($url)['links'];
@@ -23,7 +26,9 @@ function crawlerAction()
     }
 
     if (!empty($all_links)) {
-        echo "All Avialble Links From this page $url Page<pre>"; print_r($all_links);echo "</pre>";
+        echo "All Avialble Links From this page $url Page<pre>";
+        print_r($all_links);
+        echo "</pre>";
     } else {
         echo "No Links Found";
     }
@@ -37,7 +42,7 @@ function getLinks($url)
 
     try {
         $response = $client->request('GET', $url);
-    }    catch (Exception $e) {
+    } catch (Exception $e) {
         $response = $e->getResponse();
         $message = $e->getMessage();
         echo $message;
@@ -47,7 +52,7 @@ function getLinks($url)
     $crawler = new Crawler((string)$response->getBody());
     $images = ImageAction($crawler);
     $links_count = $crawler->filter('a[href]')->count();
-    if($links_count > 0) {
+    if ($links_count > 0) {
         $links = $crawler->filter('a')->each(function ($node) use ($url) {
             $link = $node->attr('href');
             if (str_contains($link, $url)) {
@@ -57,33 +62,54 @@ function getLinks($url)
 
         $linksDetails = [];
         foreach (array_unique($links) as $link) {
-            $linksDetails[] = get_link_detail($link);
+            $linksDetail = $linksDetails[] = get_link_detail($link);
+            if (!is_null($linksDetail)) {
+                insert_crawl($linksDetail);
+            }
         }
         return [
-            'links' => $linksDetails,
+            'links' => array_unique($links),
+            'links_details' => $linksDetails,
             'images' => $images,
-            ];
+        ];
     }
     return [];
 }
-function get_link_detail($link){
+
+function get_link_detail($link)
+{
     $client = new Client();
-    $response = $client->request('GET', $link);
-    $crawler = new Crawler((string)$response->getBody());
-    $text = $crawler->filter('a[href]')->text();
-    if() {
+    try {
+        $response = $client->request('GET', $link);
 
-    } else {
+        $crawler = new Crawler((string)$response->getBody());
+        $text = $crawler->filter('a[href]')->text();
 
+        if ($crawler->filter('a')->count()) {
+            $text = $crawler->filter('a')->text();
+            $type = 'link';
+        }
+        if ($crawler->filter('img')->count()) {
+            $text = $crawler->filter('img')->text();
+            $type = 'img';
+        }
+        return [
+            'link' => $link,
+            'status_code' => $response->getStatusCode(),
+            'title' => $text,
+            'type' => $type,
+        ];
+    } catch (Exception $e) {
+        $response = $e->getCode();
+        $message = $e->getMessage();
+        echo $message;
+//        $responseBodyAsString = $response->getBody()->getContents();
     }
 
-    return [
-        'link'=>$link,
-        'response_code'=> $response ->getStatusCode(),
-        'text' => $text,
-    ];
 }
-function ImageAction($crawler){
+
+function ImageAction($crawler)
+{
     return $crawler->filter('img')->each(function ($node) {
         return $node->image();
     });

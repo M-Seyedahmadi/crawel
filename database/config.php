@@ -17,7 +17,7 @@ function get_query_result($query){
     $connection = init();
     $result = $connection -> query($query);
     $connection->close();
-    return $result->fetch_assoc();
+    return $result;
 
 }
 ?>
