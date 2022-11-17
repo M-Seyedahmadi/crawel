@@ -18,8 +18,8 @@ function delete_crawl ($id) {
     return get_query_result($query);
 }
 
-function insert_crawl ($data){
-    $query = "INSERT INTO crawl (title, link, type, status_code ,created_at) VALUES ('".$data["title"]."','".$data["link"]."','".$data["type"]."','".$data["status_code"]."','. new DateTime() .')";
+function insert_crawl ($date){
+    $query = "INSERT INTO crawl (title, link, type, status_code ,created_at) VALUES ('".$date["title"]."','".$date["link"]."','".$date["type"]."','".$date["status_code"]."','".$date[" new DateTime()"]."')";
     return get_query_result($query);
 }
 ?>
