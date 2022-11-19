@@ -42,37 +42,30 @@ function getLinks($url)
 
     try {
         $response = $client->request('GET', $url);
+        $crawler = new Crawler((string)$response->getBody());
+        $images = ImageAction($crawler);
+        $links = linkAction($crawler, $url);
+        if (!empty($links)) {
+            $linksDetails = [];
+            foreach (array_unique($links) as $link) {
+                $linksDetail = $linksDetails[] = get_link_detail($link);
+                if (!is_null($linksDetail)) {
+                    insert_crawl($linksDetail);
+                }
+            }
+            return [
+                'links' => array_unique($links),
+                'links_details' => $linksDetails,
+                'images' => $images,
+            ];
+    }
     } catch (Exception $e) {
-        $response = $e->getResponse();
-        $message = $e->getMessage();
-        echo $message;
-        $responseBodyAsString = $response->getBody()->getContents();
-    }
+    $response = $e->getResponse();
+    $message = $e->getMessage();
+    echo $message;
+    // $responseBodyAsString = $response->getBody()->getContents();
+}
 
-    $crawler = new Crawler((string)$response->getBody());
-    $images = ImageAction($crawler);
-    $links_count = $crawler->filter('a[href]')->count();
-    if ($links_count > 0) {
-        $links = $crawler->filter('a')->each(function ($node) use ($url) {
-            $link = $node->attr('href');
-            if (str_contains($link, $url)) {
-                return $link;
-            }
-        });
-
-        $linksDetails = [];
-        foreach (array_unique($links) as $link) {
-            $linksDetail = $linksDetails[] = get_link_detail($link);
-            if (!is_null($linksDetail)) {
-                insert_crawl($linksDetail);
-            }
-        }
-        return [
-            'links' => array_unique($links),
-            'links_details' => $linksDetails,
-            'images' => $images,
-        ];
-    }
     return [];
 }
 
@@ -113,4 +106,19 @@ function ImageAction($crawler)
     return $crawler->filter('img')->each(function ($node) {
         return $node->image();
     });
+}
+
+function linkAction($crawler, $url)
+{
+    $links_count = $crawler->filter('a[href]')->count();
+    if ($links_count > 0) {
+        $links = $crawler->filter('a')->each(function ($node) use ($url) {
+            $link = $node->attr('href');
+            if (!str_contains($link, $url)) {
+                return $link;
+            }
+        });
+        return $links;
+    }
+    return [];
 }

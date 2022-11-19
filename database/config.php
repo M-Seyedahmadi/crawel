@@ -18,6 +18,5 @@ function get_query_result($query){
     $result = $connection -> query($query);
     $connection->close();
     return $result;
-
 }
 ?>
